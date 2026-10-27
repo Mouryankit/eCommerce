@@ -1,25 +1,19 @@
+import { getCookie, setCookie, deleteCookie } from '../utils/cookieUtils';
+
 export const GRAPHQL_URL =
   (import.meta.env.VITE_GRAPHQL_URL as string) || 'http://localhost:8000/graphql';
 export const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
 
 export function getStoredToken(): string | null {
-  try {
-    return localStorage.getItem('aura_token');
-  } catch {
-    return null;
-  }
+  return getCookie('aura_token');
 }
 
 export function setStoredToken(token: string | null) {
-  try {
-    if (token) {
-      localStorage.setItem('aura_token', token);
-    } else {
-      localStorage.removeItem('aura_token');
-    }
-  } catch {
-    // Ignore storage errors
+  if (token) {
+    setCookie('aura_token', token, 7);
+  } else {
+    deleteCookie('aura_token');
   }
 }
 
@@ -44,6 +38,7 @@ export async function graphqlRequest<T = any>(
     const response = await fetch(GRAPHQL_URL, {
       method: 'POST',
       headers,
+      credentials: 'include',
       body: JSON.stringify({ query, variables }),
       signal: controller.signal,
     });

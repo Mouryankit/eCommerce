@@ -595,46 +595,6 @@
   line-height: 1.5;
 }
 
-.admin-demo-helper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.demo-helper-text {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.78rem;
-  color: #475569;
-}
-
-.demo-helper-text code {
-  font-family: monospace;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.admin-autofill-btn {
-  background: #0f172a;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.admin-autofill-btn:hover {
-  background: #334155;
-}
-
 .admin-login-alert {
   display: flex;
   align-items: flex-start;

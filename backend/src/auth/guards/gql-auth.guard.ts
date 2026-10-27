@@ -20,16 +20,28 @@ export class GqlAuthGuard implements CanActivate {
     }
 
     const authHeader = req.headers?.authorization || req.headers?.Authorization;
-    if (!authHeader) {
+    let token: string | null = null;
+
+    if (authHeader) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        token = parts[1];
+      } else {
+        throw new UnauthorizedException('Invalid Authorization header format. Expected "Bearer <token>"');
+      }
+    } else if (req.headers?.cookie) {
+      // Extract from cookies (aura_token or token)
+      const cookieHeader = req.headers.cookie as string;
+      const match = cookieHeader.match(/(?:^|;\s*)(?:aura_token|token)=([^;]*)/);
+      if (match) {
+        token = decodeURIComponent(match[1]);
+      }
+    }
+
+    if (!token) {
       throw new UnauthorizedException('Authentication token missing. Please log in.');
     }
 
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      throw new UnauthorizedException('Invalid Authorization header format. Expected "Bearer <token>"');
-    }
-
-    const token = parts[1];
     try {
       const payload = this.authService.verifyJwt(token);
       req.user = payload;

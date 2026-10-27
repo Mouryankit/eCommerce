@@ -27,13 +27,26 @@ export type { JwtPayload };
 export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
   private readonly jwtSecret = process.env.JWT_SECRET || 'ecommerce-super-secret-jwt-key-2026';
-  private readonly adminUrl = process.env.ADMIN_URL || 'http://localhost:4001';
-  private readonly customerUrl = process.env.CUSTOMER_URL || 'http://localhost:4000';
 
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
   ) {}
+
+  private getRedirectUrl(role: UserRole): string {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (role === UserRole.ADMIN) {
+      if (process.env.ADMIN_URL && !process.env.ADMIN_URL.includes('localhost')) {
+        return process.env.ADMIN_URL;
+      }
+      return isProd ? '/admin.html' : (process.env.ADMIN_URL || 'http://localhost:4001');
+    }
+
+    if (process.env.CUSTOMER_URL && !process.env.CUSTOMER_URL.includes('localhost')) {
+      return process.env.CUSTOMER_URL;
+    }
+    return isProd ? '/' : (process.env.CUSTOMER_URL || 'http://localhost:4000');
+  }
 
   async onModuleInit() {
     await seedInitialUsers(this.userRepo, this.logger);
@@ -92,8 +105,7 @@ export class AuthService implements OnModuleInit {
       role: user.role,
     });
 
-    const redirectUrl =
-      user.role === UserRole.ADMIN ? this.adminUrl : this.customerUrl;
+    const redirectUrl = this.getRedirectUrl(user.role);
 
     return {
       token,
@@ -154,7 +166,7 @@ export class AuthService implements OnModuleInit {
         role: savedUser.role,
         avatar: savedUser.avatar,
       },
-      redirectUrl: savedUser.role === UserRole.ADMIN ? this.adminUrl : this.customerUrl,
+      redirectUrl: this.getRedirectUrl(savedUser.role),
     };
   }
 

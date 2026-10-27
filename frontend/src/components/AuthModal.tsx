@@ -5,6 +5,7 @@ import { validateEmail, validatePassword, validateName } from '../utils/authVali
 import { SignInForm } from './auth/SignInForm';
 import { RegisterForm } from './auth/RegisterForm';
 import { AdminNoticeBanner } from './auth/AdminNoticeBanner';
+import { getAdminUrl } from '../utils/navigationUrls';
 
 export const AuthModal: React.FC = () => {
   const { isLoginModalOpen, closeLogin, login, register } = useAuth();
@@ -23,8 +24,7 @@ export const AuthModal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [adminNotice, setAdminNotice] = useState<string | null>(null);
 
-  const adminUrl =
-    (import.meta.env.VITE_ADMIN_URL as string) || 'http://localhost:4001';
+  const adminUrl = getAdminUrl();
 
   if (!isLoginModalOpen) return null;
 
@@ -51,9 +51,7 @@ export const AuthModal: React.FC = () => {
         setError(result.error || 'Invalid credentials. Please verify your email and password.');
       } else {
         // Check if admin logged into customer store
-        const storedUser = localStorage.getItem('aura_user');
-        const parsed = storedUser ? JSON.parse(storedUser) : null;
-        if (parsed?.role?.toUpperCase() === 'ADMIN') {
+        if (result.user?.role?.toUpperCase() === 'ADMIN') {
           setAdminNotice('You logged in with an Administrator account.');
         } else {
           closeLogin();

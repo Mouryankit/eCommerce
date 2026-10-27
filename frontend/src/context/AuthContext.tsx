@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '../types';
 import { useToast } from './ToastContext';
+import { getCookie, setCookie, deleteCookie } from '../utils/cookieUtils';
 import {
   loginToBackend,
   registerToBackend,
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(() => getStoredToken());
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const saved = localStorage.getItem('aura_user');
+      const saved = getCookie('aura_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -56,13 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const remoteUser = await fetchCurrentUser();
           if (remoteUser && isMounted) {
             setUser(remoteUser);
-            localStorage.setItem('aura_user', JSON.stringify(remoteUser));
+            setCookie('aura_user', JSON.stringify(remoteUser), 7);
           } else if (!remoteUser && isMounted) {
             // Token is invalid or expired
             setUser(null);
             setToken(null);
             setStoredToken(null);
-            localStorage.removeItem('aura_user');
+            deleteCookie('aura_user');
           }
         } catch {
           // Keep existing cached session if offline
@@ -77,9 +78,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('aura_user', JSON.stringify(user));
+      setCookie('aura_user', JSON.stringify(user), 7);
     } else {
-      localStorage.removeItem('aura_user');
+      deleteCookie('aura_user');
     }
   }, [user]);
 
@@ -98,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const result = await loginToBackend(cleanEmail, pass);
-      localStorage.setItem('aura_user', JSON.stringify(result.user));
+      setCookie('aura_user', JSON.stringify(result.user), 7);
       setStoredToken(result.token);
       setUser(result.user);
       setToken(result.token);
@@ -132,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const result = await registerToBackend(name, cleanEmail, pass);
-      localStorage.setItem('aura_user', JSON.stringify(result.user));
+      setCookie('aura_user', JSON.stringify(result.user), 7);
       setStoredToken(result.token);
       setUser(result.user);
       setToken(result.token);
@@ -158,7 +159,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setToken(null);
     setStoredToken(null);
-    localStorage.removeItem('aura_user');
+    deleteCookie('aura_user');
+    try {
+      localStorage.removeItem('aura_token');
+      localStorage.removeItem('aura_user');
+    } catch {
+      // ignore
+    }
     setIsLogoutModalOpen(false);
     showToast('Signed out successfully.', 'info');
   }, [showToast]);

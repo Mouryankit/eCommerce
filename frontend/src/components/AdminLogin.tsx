@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getCustomerUrl } from '../utils/navigationUrls';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -24,8 +25,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const customerUrl =
-    (import.meta.env.VITE_CUSTOMER_URL as string) || 'http://localhost:4000';
+  const customerUrl = getCustomerUrl();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -13,6 +13,7 @@ import { useProducts } from '../context/ProductContext';
 import { NavbarSearch } from './navbar/NavbarSearch';
 import { NavbarUserWidget } from './navbar/NavbarUserWidget';
 import { NavbarMobileMenu } from './navbar/NavbarMobileMenu';
+import { getAdminUrl, getCustomerUrl } from '../utils/navigationUrls';
 
 interface NavbarProps {
   portalMode?: 'customer' | 'admin';
@@ -24,10 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({ portalMode = 'customer' }) => {
   const { searchQuery, setSearchQuery, filteredProducts } = useProducts();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const adminUrl =
-    (import.meta.env.VITE_ADMIN_URL as string) || 'http://localhost:4001';
-  const customerUrl =
-    (import.meta.env.VITE_CUSTOMER_URL as string) || 'http://localhost:4000';
+  const adminUrl = getAdminUrl();
+  const customerUrl = getCustomerUrl();
 
   const isCustomerMode = portalMode === 'customer';
 
@@ -37,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({ portalMode = 'customer' }) => {
         {/* Brand Logo & Contextual Role Badge */}
         <div className="navbar-brand-section">
           <a
-            href={isCustomerMode ? customerUrl : adminUrl}
+            href={isCustomerMode ? '/' : '/admin.html'}
             className="navbar-brand-btn"
             title="AURA Studio"
           >
