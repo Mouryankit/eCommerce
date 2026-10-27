@@ -1,0 +1,146 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Product {
+  id: Int!
+  name: String!
+  description: String!
+  imageUrl: String!
+  price: Float!
+  quantity: Int!
+}
+
+type PaginatedProducts {
+  items: [Product!]!
+  total: Int!
+  limit: Int
+  offset: Int
+}
+
+type User {
+  id: Int!
+  name: String!
+  email: String!
+  role: UserRole!
+  avatar: String
+}
+
+"""Available roles for authorization: ADMIN or USER"""
+enum UserRole {
+  ADMIN
+  USER
+}
+
+type AuthResponse {
+  token: String!
+  user: User!
+  redirectUrl: String!
+}
+
+type OrderItem {
+  id: Int!
+  productId: Int!
+  productName: String!
+  price: Float!
+  quantity: Int!
+  imageUrl: String
+}
+
+type Order {
+  id: Int!
+  orderNumber: String!
+  userId: Int
+  customerName: String!
+  customerEmail: String!
+  totalAmount: Float!
+  status: OrderStatus!
+  shippingAddress: String!
+  city: String
+  items: [OrderItem!]!
+  createdAt: String!
+}
+
+"""Lifecycle statuses for store orders"""
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+type Query {
+  index: String!
+  me: User!
+  myOrders: [Order!]!
+  allOrders: [Order!]!
+  getAllProduct: [Product!]!
+  products(limit: Int, offset: Int, category: String, search: String): PaginatedProducts!
+  getPaginatedProducts(limit: Int, offset: Int, category: String, search: String): PaginatedProducts!
+  productById(productId: Int!): Product!
+}
+
+type Mutation {
+  login(input: LoginInput!): AuthResponse!
+  register(input: RegisterInput!): AuthResponse!
+  promoteToAdmin(email: String!): Boolean!
+  createOrder(input: CreateOrderInput!): Order!
+  updateOrderStatus(input: UpdateOrderStatusInput!): Order!
+  deleteproduct(productId: Int!): String!
+  addproduct(addProductArgs: AddProductArgs!): String!
+  updateProduct(updateProductArgs: UpdateProductArgs!): String!
+  uploadProductImage(file: Upload!): String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input RegisterInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
+input CreateOrderInput {
+  items: [CreateOrderItemInput!]!
+  customerName: String!
+  customerEmail: String!
+  shippingAddress: String!
+  city: String
+}
+
+input CreateOrderItemInput {
+  productId: Int!
+  productName: String!
+  price: Float!
+  quantity: Int!
+  imageUrl: String
+}
+
+input UpdateOrderStatusInput {
+  orderId: Int!
+  status: OrderStatus!
+}
+
+input AddProductArgs {
+  name: String!
+  description: String!
+  imageUrl: String!
+  price: Float!
+  quantity: Int!
+}
+
+input UpdateProductArgs {
+  id: Int!
+  name: String
+  description: String
+  imageUrl: String
+  price: Float
+  quantity: Int
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload

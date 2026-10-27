@@ -1,0 +1,24 @@
+# Node.js
+node_modules/
+dist/
+build/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# Uploads and temporary data
+uploads/
+**/uploads/
+**/*.tsbuildinfo
+
+# IDE / System
+.DS_Store
+.vscode/
+.idea/

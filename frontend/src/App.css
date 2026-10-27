@@ -1,0 +1,51 @@
+/* ==========================================================================
+   AURA STUDIO - MODULAR DESIGN SYSTEM
+   ========================================================================== */
+
+/* 1. Global Layout, Containers & Shared Cross-Portal Switchers */
+@import './styles/base.css';
+
+/* 2. Navigation Header & Search */
+@import './styles/navbar.css';
+
+/* 3. Hero Showcase & Narrative Banner */
+@import './styles/hero.css';
+
+/* 4. Category Filter & Sorting Controls */
+@import './styles/category-filter.css';
+
+/* 5. Product Catalog Grid & Cards */
+@import './styles/products.css';
+
+/* 6. Product Quick-View Detail Modal */
+@import './styles/product-detail.css';
+
+/* 7. Slide-Over Cart Drawer */
+@import './styles/cart.css';
+
+/* 8. Multi-Step Checkout Modal */
+@import './styles/checkout.css';
+
+/* 9. Authentication & Logout Dialogs */
+@import './styles/auth.css';
+
+/* 10. Customer Account & Order History */
+@import './styles/account.css';
+
+/* 11. Administration Management & Gate */
+@import './styles/admin.css';
+
+/* 12. Admin Product Edit/Create & Delete Modals */
+@import './styles/admin-modal.css';
+
+/* 13. System Notifications & Toasts */
+@import './styles/toast.css';
+
+/* 14. Storefront Footer & Newsletter */
+@import './styles/footer.css';
+
+/* 15. Server-Side Pagination Controls */
+@import './styles/pagination.css';
+
+/* 16. Global Responsive Media Queries */
+@import './styles/responsive.css';

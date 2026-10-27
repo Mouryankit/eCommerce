@@ -1,0 +1,137 @@
+/* --------------------------------------------------------------------------
+   13. FOOTER
+   -------------------------------------------------------------------------- */
+.footer-root {
+  background: #ffffff;
+  border-top: 1px solid #eef2f6;
+  padding: 4rem 1.75rem 3rem;
+  margin-top: auto;
+}
+
+.footer-container {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.35fr;
+  gap: 3rem;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.footer-logo .brand-symbol {
+  font-size: 1.2rem;
+  color: #000;
+}
+
+.footer-logo .brand-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.footer-logo .brand-edition {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.footer-bio {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  max-width: 320px;
+}
+
+.footer-copy {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.footer-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0f172a;
+  margin-bottom: 1.15rem;
+}
+
+.footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.footer-links a {
+  font-size: 0.825rem;
+  color: #64748b;
+  transition: color 0.15s;
+}
+
+.footer-links a:hover {
+  color: #0f172a;
+}
+
+.footer-subtext {
+  font-size: 0.825rem;
+  line-height: 1.5;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.footer-newsletter-form {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 3px;
+}
+
+.footer-email-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.825rem;
+  outline: none;
+}
+
+.footer-subscribe-btn {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-subscribe-btn:hover {
+  background: #1e293b;
+}
+
+/* Spinner helper */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
