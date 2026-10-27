@@ -76,20 +76,40 @@
 .admin-primary-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #0f172a;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 0.65rem 1.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.75rem 1.45rem;
   font-size: 0.875rem;
   font-weight: 600;
-  transition: all 0.2s;
+  letter-spacing: -0.01em;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .admin-primary-action-btn:hover {
-  background: #1e293b;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(-1.5px);
+  color: #ffffff;
+}
+
+.admin-primary-action-btn:active {
+  transform: translateY(0.5px);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.admin-primary-action-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.admin-primary-action-btn:hover svg {
+  transform: rotate(90deg);
 }
 
 /* Backend Status Banner */

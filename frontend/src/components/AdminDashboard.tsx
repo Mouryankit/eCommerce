@@ -5,59 +5,20 @@ import { fetchPaginatedProductsFromBackend } from '../services/graphql';
 import { AdminProductModal } from './AdminProductModal';
 import { ProductDetailModal } from './ProductDetailModal';
 import { AdminOrdersView } from './AdminOrdersView';
-import { resolveImageUrl, getProductFallbackImage } from '../utils/image';
+import { AdminStatsCards } from './admin/AdminStatsCards';
+import { AdminProductToolbar } from './admin/AdminProductToolbar';
+import { AdminProductTable } from './admin/AdminProductTable';
+import { AdminPagination, getPaginationRange } from './admin/AdminPagination';
+import { AdminDeleteModal } from './admin/AdminDeleteModal';
 import {
   Package,
-  Layers,
-  DollarSign,
   AlertTriangle,
   Plus,
-  Search,
-  Filter,
   RefreshCw,
-  Edit3,
-  Trash2,
-  Eye,
-  PlusCircle,
-  MinusCircle,
   Database,
   CheckCircle2,
   ShoppingBag,
-  ChevronLeft,
-  ChevronRight,
-  LayoutList,
 } from 'lucide-react';
-
-function getPaginationRange(current: number, total: number): (number | 'ellipsis')[] {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-  if (current <= 4) {
-    return [1, 2, 3, 4, 5, 'ellipsis', total];
-  }
-  if (current >= total - 3) {
-    return [1, 'ellipsis', total - 4, total - 3, total - 2, total - 1, total];
-  }
-  return [1, 'ellipsis', current - 1, current, current + 1, 'ellipsis', total];
-}
-
-const AdminProductThumb: React.FC<{ product: Product }> = ({ product }) => {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const fallback = getProductFallbackImage(product.name, product.category);
-  const resolved = resolveImageUrl(product.imageUrl, product.name, product.category);
-  const src = failedUrl === resolved ? fallback : resolved;
-
-  return (
-    <img
-      src={src}
-      alt={product.name}
-      onError={() => setFailedUrl(resolved)}
-      referrerPolicy="no-referrer"
-      loading="lazy"
-      className="table-thumb-image"
-    />
-  );
-};
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -302,354 +263,40 @@ export const AdminDashboard: React.FC = () => {
           <AdminOrdersView />
         ) : (
           <>
-            {/* Overview Stats Cards */}
-            <div className="admin-stats-grid">
-              <div className="admin-stat-card">
-                <div className="stat-card-icon stat-icon-blue">
-                  <Package size={22} />
-                </div>
-                <div className="stat-card-details">
-                  <span className="stat-card-label">Catalog Products</span>
-                  <h3 className="stat-card-number">{stats.totalProducts}</h3>
-                  <span className="stat-card-sub">{stats.categoriesCount} categories active</span>
-                </div>
-              </div>
+            <AdminStatsCards stats={stats} />
 
-              <div className="admin-stat-card">
-                <div className="stat-card-icon stat-icon-indigo">
-                  <Layers size={22} />
-                </div>
-                <div className="stat-card-details">
-                  <span className="stat-card-label">Total Units in Stock</span>
-                  <h3 className="stat-card-number">{stats.totalUnits.toLocaleString()}</h3>
-                  <span className="stat-card-sub">Items ready to dispatch</span>
-                </div>
-              </div>
+            <AdminProductToolbar
+              adminSearch={adminSearch}
+              setAdminSearch={setAdminSearch}
+              adminCategory={adminCategory}
+              setAdminCategory={setAdminCategory}
+              adminStockFilter={adminStockFilter}
+              setAdminStockFilter={setAdminStockFilter}
+              pageSize={pageSize}
+              handlePageSizeChange={handlePageSizeChange}
+              setCurrentPage={setCurrentPage}
+            />
 
-              <div className="admin-stat-card">
-                <div className="stat-card-icon stat-icon-emerald">
-                  <DollarSign size={22} />
-                </div>
-                <div className="stat-card-details">
-                  <span className="stat-card-label">Inventory Valuation</span>
-                  <h3 className="stat-card-number">
-                    ${stats.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </h3>
-                  <span className="stat-card-sub">Retail stock value</span>
-                </div>
-              </div>
+            <AdminProductTable
+              displayedProducts={displayedProducts}
+              handleQuickAdjust={handleQuickAdjust}
+              handleEdit={handleEdit}
+              setPreviewProduct={setPreviewProduct}
+              setDeletingId={setDeletingId}
+            />
 
-              <div className="admin-stat-card">
-                <div className={`stat-card-icon ${stats.lowStockCount > 0 ? 'stat-icon-amber' : 'stat-icon-gray'}`}>
-                  <AlertTriangle size={22} />
-                </div>
-                <div className="stat-card-details">
-                  <span className="stat-card-label">Low / Out of Stock</span>
-                  <h3 className="stat-card-number">
-                    {stats.lowStockCount + stats.outOfStockCount}
-                  </h3>
-                  <span className="stat-card-sub">
-                    {stats.lowStockCount} low stock • {stats.outOfStockCount} sold out
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Toolbar & Filters for Table */}
-            <div className="admin-table-toolbar">
-              <div className="table-search-box">
-                <Search size={16} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search by title, description or ID..."
-                  value={adminSearch}
-                  onChange={(e) => {
-                    setAdminSearch(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="table-search-input"
-                />
-              </div>
-
-              <div className="table-filters-group">
-                <div className="table-select-wrap">
-                  <Filter size={15} />
-                  <select
-                    value={adminCategory}
-                    onChange={(e) => {
-                      setAdminCategory(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="table-select"
-                  >
-                    <option value="All">All Categories</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Apparel">Apparel</option>
-                    <option value="Accessories">Accessories</option>
-                    <option value="Home">Home</option>
-                  </select>
-                </div>
-
-                <div className="table-select-wrap">
-                  <select
-                    value={adminStockFilter}
-                    onChange={(e) => {
-                      setAdminStockFilter(e.target.value as any);
-                      setCurrentPage(1);
-                    }}
-                    className="table-select"
-                  >
-                    <option value="all">All Inventory</option>
-                    <option value="low">Low Stock Only (≤ 5)</option>
-                    <option value="out">Out of Stock (0)</option>
-                  </select>
-                </div>
-
-                {/* Page Size Selector (Options: 5, 10, 20, 50, All products) */}
-                <div className="table-select-wrap">
-                  <LayoutList size={15} />
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      const val = e.target.value === 'all' ? 'all' : (Number(e.target.value) as PageSizeOption);
-                      handlePageSizeChange(val);
-                    }}
-                    className="table-select"
-                    aria-label="Products per page"
-                  >
-                    <option value={5}>5 per page</option>
-                    <option value={10}>10 per page</option>
-                    <option value={20}>20 per page</option>
-                    <option value={50}>50 per page</option>
-                    <option value="all">All products</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Inventory Table */}
-            <div className="admin-table-card">
-              <div className="table-responsive-wrapper">
-                <table className="admin-inventory-table">
-                  <thead>
-                    <tr>
-                      <th>Product Details</th>
-                      <th>Category</th>
-                      <th>Price</th>
-                      <th>Stock Inventory</th>
-                      <th>Status</th>
-                      <th className="table-header-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayedProducts.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="table-empty-cell">
-                          <div className="table-empty-state">
-                            <Package size={36} strokeWidth={1.5} />
-                            <h4>No inventory matches your search criteria</h4>
-                            <p>Try clearing filters or add a new product to your catalog.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      displayedProducts.map((item) => {
-                        const isOut = item.quantity <= 0;
-                        const isLow = item.quantity > 0 && item.quantity <= 5;
-                        const cleanDesc = item.description.replace(/^\[(Electronics|Apparel|Accessories|Home)\]\s*/i, '');
-
-                        return (
-                          <tr key={item.id} className="admin-table-row">
-                            {/* Details */}
-                            <td className="product-details-cell">
-                              <div className="cell-flex">
-                                <AdminProductThumb product={item} />
-                                <div className="cell-text">
-                                  <span className="table-product-title">{item.name}</span>
-                                  <span className="table-product-sub">
-                                    ID: #{item.id} • {cleanDesc.slice(0, 48)}...
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Category */}
-                            <td>
-                              <span className="table-cat-pill">{item.category || 'General'}</span>
-                            </td>
-
-                            {/* Price */}
-                            <td>
-                              <span className="table-price-text">${Number(item.price).toFixed(2)}</span>
-                            </td>
-
-                            {/* Quantity with quick +/- adjustment */}
-                            <td>
-                              <div className="table-stock-control">
-                                <button
-                                  onClick={() => handleQuickAdjust(item.id, -1)}
-                                  disabled={item.quantity <= 0}
-                                  className="quick-stock-btn"
-                                  title="Decrease stock by 1"
-                                  aria-label="Decrease stock"
-                                >
-                                  <MinusCircle size={17} />
-                                </button>
-                                <span className="quick-stock-qty">{item.quantity}</span>
-                                <button
-                                  onClick={() => handleQuickAdjust(item.id, 1)}
-                                  className="quick-stock-btn"
-                                  title="Increase stock by 1"
-                                  aria-label="Increase stock"
-                                >
-                                  <PlusCircle size={17} />
-                                </button>
-                              </div>
-                            </td>
-
-                            {/* Status */}
-                            <td>
-                              {isOut ? (
-                                <span className="stock-badge badge-danger">Out of Stock</span>
-                              ) : isLow ? (
-                                <span className="stock-badge badge-warning">Low Stock ({item.quantity})</span>
-                              ) : (
-                                <span className="stock-badge badge-success">In Stock</span>
-                              )}
-                            </td>
-
-                            {/* Action buttons */}
-                            <td className="table-cell-actions">
-                              <div className="actions-flex-row">
-                                <button
-                                  onClick={() => handleEdit(item)}
-                                  className="table-action-btn edit-action"
-                                  title="Edit product"
-                                >
-                                  <Edit3 size={15} />
-                                  <span>Edit</span>
-                                </button>
-
-                                <button
-                                  onClick={() => setPreviewProduct(item)}
-                                  className="table-action-btn view-action"
-                                  title="Preview product details"
-                                >
-                                  <Eye size={15} />
-                                  <span>Preview</span>
-                                </button>
-
-                                <button
-                                  onClick={() => setDeletingId(item.id)}
-                                  className="table-action-btn delete-action"
-                                  title="Delete product"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Pagination Controls */}
-            {effectiveTotal > 0 && (
-              <div className="pagination-bar-root" aria-label="Admin product pagination controls">
-                {/* Left: Summary Info */}
-                <div className="pagination-info">
-                  {pageSize === 'all' ? (
-                    <span>Showing all <strong>{effectiveTotal}</strong> products</span>
-                  ) : (
-                    <span>
-                      Showing <strong>{startItem}–{endItem}</strong> of <strong>{effectiveTotal}</strong> products
-                    </span>
-                  )}
-                </div>
-
-                {/* Center: Previous / Page Numbers / Next controls */}
-                <div className="pagination-controls-wrapper">
-                  <button
-                    type="button"
-                    className="pagination-btn pagination-nav-btn prev-btn"
-                    disabled={safeCurrentPage <= 1 || loadingPage || pageSize === 'all'}
-                    onClick={() => setCurrentPage(safeCurrentPage - 1)}
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft size={16} />
-                    <span>Previous</span>
-                  </button>
-
-                  {pageSize !== 'all' && (
-                    <div className="pagination-pages-list" role="navigation" aria-label="Pagination pages">
-                      {paginationRange.map((pageItem, idx) => {
-                        if (pageItem === 'ellipsis') {
-                          return (
-                            <span key={`ellipsis-${idx}`} className="pagination-ellipsis">
-                              &hellip;
-                            </span>
-                          );
-                        }
-
-                        const isActive = pageItem === safeCurrentPage;
-                        return (
-                          <button
-                            key={pageItem}
-                            type="button"
-                            disabled={loadingPage}
-                            onClick={() => setCurrentPage(pageItem)}
-                            className={`pagination-btn pagination-number-btn ${isActive ? 'active' : ''}`}
-                            aria-current={isActive ? 'page' : undefined}
-                            aria-label={`Page ${pageItem}`}
-                          >
-                            {pageItem}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className="pagination-btn pagination-nav-btn next-btn"
-                    disabled={safeCurrentPage >= totalPages || loadingPage || pageSize === 'all'}
-                    onClick={() => setCurrentPage(safeCurrentPage + 1)}
-                    aria-label="Next page"
-                  >
-                    <span>Next</span>
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-
-                {/* Right: Products per page selector */}
-                <div className="pagination-page-size-selector">
-                  <LayoutList size={14} className="page-size-icon" />
-                  <label htmlFor="admin-page-size-footer" className="page-size-label">
-                    Per page:
-                  </label>
-                  <select
-                    id="admin-page-size-footer"
-                    value={pageSize}
-                    onChange={(e) => {
-                      const val = e.target.value === 'all' ? 'all' : (Number(e.target.value) as PageSizeOption);
-                      handlePageSizeChange(val);
-                    }}
-                    className="pagination-size-dropdown"
-                    aria-label="Admin products per page"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value="all">All</option>
-                  </select>
-                </div>
-              </div>
-            )}
+            <AdminPagination
+              effectiveTotal={effectiveTotal}
+              pageSize={pageSize}
+              startItem={startItem}
+              endItem={endItem}
+              safeCurrentPage={safeCurrentPage}
+              totalPages={totalPages}
+              loadingPage={loadingPage}
+              paginationRange={paginationRange}
+              setCurrentPage={setCurrentPage}
+              handlePageSizeChange={handlePageSizeChange}
+            />
           </>
         )}
       </div>
@@ -674,38 +321,11 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {deletingId !== null && (
-        <div className="modal-backdrop-overlay" onClick={() => setDeletingId(null)}>
-          <div
-            className="delete-modal-dialog"
-            onClick={(e) => e.stopPropagation()}
-            role="alertdialog"
-          >
-            <div className="delete-icon-box">
-              <Trash2 size={28} />
-            </div>
-            <h3>Remove Product from Catalog?</h3>
-            <p>
-              This action will permanently delete product #{deletingId} from the active database
-              and store catalog.
-            </p>
-            <div className="delete-modal-actions">
-              <button
-                onClick={() => setDeletingId(null)}
-                className="admin-btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="delete-confirm-btn"
-              >
-                Delete Product
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminDeleteModal
+        deletingId={deletingId}
+        setDeletingId={setDeletingId}
+        confirmDelete={confirmDelete}
+      />
     </div>
   );
 };

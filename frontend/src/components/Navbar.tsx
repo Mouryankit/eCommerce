@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import {
   ShoppingBag,
-  Search,
-  X,
-  User as UserIcon,
-  LogIn,
-  LogOut,
   LayoutDashboard,
   Store,
   Menu,
+  X,
   ExternalLink,
-  ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
+import { NavbarSearch } from './navbar/NavbarSearch';
+import { NavbarUserWidget } from './navbar/NavbarUserWidget';
+import { NavbarMobileMenu } from './navbar/NavbarMobileMenu';
 
 interface NavbarProps {
   portalMode?: 'customer' | 'admin';
@@ -65,33 +63,11 @@ export const Navbar: React.FC<NavbarProps> = ({ portalMode = 'customer' }) => {
 
         {/* Live Search Bar (Customer Storefront only) */}
         {isCustomerMode && (
-          <div className="navbar-search-wrapper">
-            <div className="navbar-search-box">
-              <Search size={17} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search products, materials, electronics..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="navbar-search-input"
-                aria-label="Live product search"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="search-clear-btn"
-                  title="Clear search"
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-            {searchQuery && (
-              <span className="search-results-count">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-              </span>
-            )}
-          </div>
+          <NavbarSearch
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            filteredCount={filteredProducts.length}
+          />
         )}
 
         {/* Right Actions: Links, Cart & Auth */}
@@ -122,57 +98,14 @@ export const Navbar: React.FC<NavbarProps> = ({ portalMode = 'customer' }) => {
           )}
 
           {/* User Auth Section */}
-          {isAuthenticated && user ? (
-            <div className="user-profile-widget">
-              {/* Account orders button for customers */}
-              {isCustomerMode && (
-                <button
-                  onClick={openAccount}
-                  className="navbar-account-trigger"
-                  title="View My Orders"
-                >
-                  <ClipboardList size={16} />
-                  <span>Orders</span>
-                </button>
-              )}
-
-              <div
-                className="user-avatar-badge"
-                title={`${user.name} (${user.role})`}
-                onClick={isCustomerMode ? openAccount : undefined}
-                style={{ cursor: isCustomerMode ? 'pointer' : 'default' }}
-              >
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="user-avatar-img" />
-                ) : (
-                  <div className="user-avatar-fallback">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className="user-meta-info">
-                <span className="user-display-name">{user.name.split(' ')[0]}</span>
-                <span className="user-role-tag">{user.role}</span>
-              </div>
-              <button
-                onClick={openLogout}
-                className="navbar-icon-btn logout-trigger-btn"
-                title="Sign Out"
-                aria-label="Sign Out"
-              >
-                <LogOut size={17} />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={openLogin}
-              className="navbar-auth-btn"
-              title="Sign in to your account"
-            >
-              <LogIn size={16} />
-              <span>Sign In</span>
-            </button>
-          )}
+          <NavbarUserWidget
+            user={user}
+            isAuthenticated={isAuthenticated}
+            isCustomerMode={isCustomerMode}
+            openLogin={openLogin}
+            openLogout={openLogout}
+            openAccount={openAccount}
+          />
 
           {/* Cart Drawer Trigger: ONLY visible in customer storefront */}
           {isCustomerMode && (
@@ -205,80 +138,18 @@ export const Navbar: React.FC<NavbarProps> = ({ portalMode = 'customer' }) => {
       </div>
 
       {/* Mobile Drawer Dropdown */}
-      {mobileMenuOpen && (
-        <div className="mobile-dropdown-menu">
-          {isCustomerMode && (
-            <div className="mobile-search-section">
-              <input
-                type="text"
-                placeholder="Search store..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="mobile-search-input"
-              />
-            </div>
-          )}
-          <div className="mobile-links-section">
-            {!isCustomerMode ? (
-              <div className="mobile-nav-link active">
-                <LayoutDashboard size={18} />
-                <span>Admin Operations Dashboard</span>
-                <span className="admin-status-pill">ADMIN</span>
-              </div>
-            ) : (
-              <div className="mobile-nav-link active">
-                <Store size={18} />
-                <span>Customer Storefront</span>
-              </div>
-            )}
-            {isCustomerMode && (
-              <button
-                onClick={() => {
-                  openAccount();
-                  setMobileMenuOpen(false);
-                }}
-                className="mobile-nav-link"
-              >
-                <ClipboardList size={18} />
-                <span>My Orders & Account</span>
-              </button>
-            )}
-          </div>
-          <div className="mobile-auth-section">
-            {isAuthenticated && user ? (
-              <div className="mobile-user-row">
-                <div className="mobile-user-left">
-                  <UserIcon size={18} />
-                  <span>
-                    {user.name} ({user.role})
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    openLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="mobile-logout-btn"
-                >
-                  <LogOut size={16} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  openLogin();
-                  setMobileMenuOpen(false);
-                }}
-                className="mobile-login-btn"
-              >
-                <LogIn size={18} />
-                <span>Sign In / Demo Accounts</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      <NavbarMobileMenu
+        isOpen={mobileMenuOpen}
+        isCustomerMode={isCustomerMode}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        isAuthenticated={isAuthenticated}
+        user={user}
+        openAccount={openAccount}
+        openLogin={openLogin}
+        openLogout={openLogout}
+        closeMenu={() => setMobileMenuOpen(false)}
+      />
     </header>
   );
 };

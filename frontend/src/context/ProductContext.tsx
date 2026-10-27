@@ -9,15 +9,12 @@ import {
   checkBackendConnection,
 } from '../services/graphql';
 import { useToast } from './ToastContext';
-
-interface ProductStats {
-  totalProducts: number;
-  totalUnits: number;
-  inventoryValue: number;
-  lowStockCount: number;
-  outOfStockCount: number;
-  categoriesCount: number;
-}
+import {
+  type ProductStats,
+  sortProducts,
+  filterProducts,
+  calculateProductStats,
+} from '../utils/productUtils';
 
 interface ProductContextValue {
   // Existing properties preserved for Admin Dashboard and compatibility
@@ -110,49 +107,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Full filtered list used for offline simulation, search counts, and admin views
   const filteredProducts = useMemo(() => {
-    let result = [...products];
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.category?.toLowerCase().includes(q)
-      );
-    }
-
-    // Category filter
-    if (selectedCategory !== 'All') {
-      result = result.filter((p) => p.category === selectedCategory);
-    }
-
-    // Sorting
-    switch (sortBy) {
-      case 'price-asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'rating':
-        result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-        break;
-      case 'name-asc':
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'featured':
-      default:
-        result.sort((a, b) => {
-          if (a.featured && !b.featured) return -1;
-          if (!a.featured && b.featured) return 1;
-          return b.id - a.id;
-        });
-        break;
-    }
-
-    return result;
+    const filtered = filterProducts(products, searchQuery, selectedCategory);
+    return sortProducts(filtered, sortBy);
   }, [products, searchQuery, selectedCategory, sortBy]);
 
   // Total count for current filter
@@ -338,31 +294,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Active items for the current page
   const paginatedProducts = useMemo(() => {
     if (isBackendConnected) {
-      const list = [...serverPaginatedProducts];
-      // Apply sorting to the current page items
-      switch (sortBy) {
-        case 'price-asc':
-          list.sort((a, b) => a.price - b.price);
-          break;
-        case 'price-desc':
-          list.sort((a, b) => b.price - a.price);
-          break;
-        case 'rating':
-          list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-          break;
-        case 'name-asc':
-          list.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case 'featured':
-        default:
-          list.sort((a, b) => {
-            if (a.featured && !b.featured) return -1;
-            if (!a.featured && b.featured) return 1;
-            return a.id - b.id;
-          });
-          break;
-      }
-      return list;
+      return sortProducts(serverPaginatedProducts, sortBy);
     }
 
     // Offline fallback pagination slice
@@ -374,21 +306,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [isBackendConnected, serverPaginatedProducts, filteredProducts, pageSize, effectiveCurrentPage, sortBy]);
 
   const stats: ProductStats = useMemo(() => {
-    const totalProducts = products.length;
-    const totalUnits = products.reduce((acc, p) => acc + (p.quantity || 0), 0);
-    const inventoryValue = products.reduce((acc, p) => acc + p.price * (p.quantity || 0), 0);
-    const lowStockCount = products.filter((p) => p.quantity > 0 && p.quantity <= 5).length;
-    const outOfStockCount = products.filter((p) => p.quantity <= 0).length;
-    const categoriesCount = new Set(products.map((p) => p.category || 'Other')).size;
-
-    return {
-      totalProducts,
-      totalUnits,
-      inventoryValue,
-      lowStockCount,
-      outOfStockCount,
-      categoriesCount,
-    };
+    return calculateProductStats(products);
   }, [products]);
 
   return (

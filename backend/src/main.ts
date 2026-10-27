@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { resolve, join } from 'node:path';
+import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 
 const envPath = existsSync(resolve(process.cwd(), 'backend', '.env'))
@@ -9,7 +9,6 @@ dotenv.config({ path: envPath });
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import express from 'express';
 import { graphqlUploadExpress } from 'graphql-upload-ts';
 
 async function bootstrap() {
@@ -37,8 +36,8 @@ async function bootstrap() {
 
       const isAllowed =
         configuredOrigins.includes(origin) ||
-        /\.vercel\.app$/.test(origin) ||
-        /\.onrender\.com$/.test(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com') ||
         /^http:\/\/localhost:\d+$/.test(origin) ||
         /^http:\/\/127\.0\.0\.1:\d+$/.test(origin) ||
         /^http:\/\/.*\.localhost:\d+$/.test(origin);
@@ -64,23 +63,6 @@ async function bootstrap() {
       maxFileSize: 5 * 1024 * 1024, // 5 MB limit
       maxFiles: 1,
     }),
-  );
-
-  const uploadsDir = existsSync(join(process.cwd(), 'backend', 'uploads'))
-    ? join(process.cwd(), 'backend', 'uploads')
-    : existsSync(join(process.cwd(), 'uploads'))
-    ? join(process.cwd(), 'uploads')
-    : resolve(import.meta.dirname, '..', 'uploads');
-
-  app.use(
-    '/uploads',
-    (req: express.Request, res: express.Response, next: express.NextFunction) => {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-      next();
-    },
-    express.static(uploadsDir),
-    express.static(join(uploadsDir, 'products')),
   );
 
   const port = Number(process.env.PORT) || 8000;

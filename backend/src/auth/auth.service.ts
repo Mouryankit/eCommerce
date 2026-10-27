@@ -12,20 +12,16 @@ import { UserEntity, UserRole } from '../user/entity/user.entity.js';
 import { LoginInput, RegisterInput } from './args/auth.args.js';
 import { AuthResponse } from './schema/user.schema.js';
 import {
-  scryptSync,
-  randomBytes,
-  timingSafeEqual,
-  createHmac,
-} from 'node:crypto';
+  JwtPayload,
+  hashPassword,
+  generateSalt,
+  verifyPassword,
+  signJwt,
+  verifyJwt,
+} from './utils/crypto.util.js';
+import { seedInitialUsers } from './utils/auth-seeder.util.js';
 
-export interface JwtPayload {
-  sub: number;
-  email: string;
-  name: string;
-  role: UserRole;
-  exp: number;
-  iat: number;
-}
+export type { JwtPayload };
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -40,81 +36,29 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.seedInitialUsers();
+    await seedInitialUsers(this.userRepo, this.logger);
   }
 
-  // --- Password Hashing & Verification (OWASP scrypt standard) ---
+  // --- Password Hashing & Verification (Delegates to crypto.util) ---
   hashPassword(password: string, salt: string): string {
-    return scryptSync(password, salt, 64).toString('hex');
+    return hashPassword(password, salt);
   }
 
   generateSalt(): string {
-    return randomBytes(16).toString('hex');
+    return generateSalt();
   }
 
   verifyPassword(password: string, salt: string, hash: string): boolean {
-    const inputHash = this.hashPassword(password, salt);
-    try {
-      return timingSafeEqual(
-        Buffer.from(inputHash, 'hex'),
-        Buffer.from(hash, 'hex'),
-      );
-    } catch {
-      return false;
-    }
+    return verifyPassword(password, salt, hash);
   }
 
   // --- RFC 7519 JWT Standard using HMAC-SHA256 ---
   signJwt(payload: Omit<JwtPayload, 'iat' | 'exp'>, expiresInSeconds: number = 7 * 24 * 3600): string {
-    const header = { alg: 'HS256', typ: 'JWT' };
-    const iat = Math.floor(Date.now() / 1000);
-    const exp = iat + expiresInSeconds;
-    const fullPayload: JwtPayload = { ...payload, iat, exp };
-
-    const b64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
-    const b64Payload = Buffer.from(JSON.stringify(fullPayload)).toString('base64url');
-    const signature = createHmac('sha256', this.jwtSecret)
-      .update(`${b64Header}.${b64Payload}`)
-      .digest('base64url');
-
-    return `${b64Header}.${b64Payload}.${signature}`;
+    return signJwt(payload, this.jwtSecret, expiresInSeconds);
   }
 
   verifyJwt(token: string): JwtPayload {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new UnauthorizedException('Malformed authentication token');
-    }
-
-    const [b64Header, b64Payload, signature] = parts;
-    const expectedSignature = createHmac('sha256', this.jwtSecret)
-      .update(`${b64Header}.${b64Payload}`)
-      .digest('base64url');
-
-    let isValid = false;
-    try {
-      isValid = timingSafeEqual(
-        Buffer.from(signature, 'utf8'),
-        Buffer.from(expectedSignature, 'utf8'),
-      );
-    } catch {
-      isValid = false;
-    }
-
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid token signature');
-    }
-
-    const payload: JwtPayload = JSON.parse(
-      Buffer.from(b64Payload, 'base64url').toString('utf8'),
-    );
-
-    const now = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < now) {
-      throw new UnauthorizedException('Authentication token has expired');
-    }
-
-    return payload;
+    return verifyJwt(token, this.jwtSecret);
   }
 
   // --- Authentication Flows ---
@@ -232,46 +176,5 @@ export class AuthService implements OnModuleInit {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
-  }
-
-  // --- Initial Admin & Demo User Seeding ---
-  private async seedInitialUsers() {
-    try {
-      const adminEmail = 'admin@aura.store';
-      const adminExists = await this.userRepo.findOne({ where: { email: adminEmail } });
-      if (!adminExists) {
-        const salt = this.generateSalt();
-        const adminUser = new UserEntity();
-        adminUser.name = 'Elena Rostova';
-        adminUser.email = adminEmail;
-        adminUser.salt = salt;
-        adminUser.passwordHash = this.hashPassword('admin123', salt);
-        adminUser.role = UserRole.ADMIN;
-        adminUser.avatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
-        await this.userRepo.save(adminUser);
-        this.logger.log(`Initialized default administrator account: ${adminEmail}`);
-      } else if (adminExists.role !== UserRole.ADMIN) {
-        adminExists.role = UserRole.ADMIN;
-        await this.userRepo.save(adminExists);
-        this.logger.log(`Ensured administrator privileges for: ${adminEmail}`);
-      }
-
-      const customerEmail = 'customer@aura.store';
-      const customerExists = await this.userRepo.findOne({ where: { email: customerEmail } });
-      if (!customerExists) {
-        const salt = this.generateSalt();
-        const customerUser = new UserEntity();
-        customerUser.name = 'Julian Vance';
-        customerUser.email = customerEmail;
-        customerUser.salt = salt;
-        customerUser.passwordHash = this.hashPassword('customer123', salt);
-        customerUser.role = UserRole.USER;
-        customerUser.avatar = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
-        await this.userRepo.save(customerUser);
-        this.logger.log(`Initialized default customer account: ${customerEmail}`);
-      }
-    } catch (err: any) {
-      this.logger.warn(`User seeding note: ${err?.message || err}`);
-    }
   }
 }
