@@ -97,7 +97,7 @@ export const NavbarMobileMenu: React.FC<MobileMenuProps> = ({
             className="mobile-login-btn"
           >
             <LogIn size={18} />
-            <span>Sign In / Demo Accounts</span>
+            <span>Sign In / Register</span>
           </button>
         )}
       </div>

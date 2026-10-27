@@ -101,12 +101,6 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  const fillCustomerDemo = () => {
-    setEmail('customer@aura.store');
-    setPassword('customer123');
-    setError('');
-  };
-
   return (
     <div className="modal-backdrop-overlay" onClick={closeLogin}>
       <div
@@ -176,7 +170,6 @@ export const AuthModal: React.FC = () => {
             error={error}
             loading={loading}
             onSubmit={handleSignInSubmit}
-            fillCustomerDemo={fillCustomerDemo}
           />
         ) : (
           <RegisterForm

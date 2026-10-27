@@ -59,12 +59,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
     }
   };
 
-  const fillAdminCredentials = () => {
-    setEmail('admin@aura.store');
-    setPassword('admin123');
-    setError('');
-  };
-
   return (
     <div className="admin-login-fullscreen">
       <div className="admin-login-card">
@@ -82,21 +76,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
           <p className="admin-login-subtitle">
             Restricted access for catalog directors, inventory managers, and store administrators.
           </p>
-        </div>
-
-        {/* Quick Demo Helper */}
-        <div className="admin-demo-helper">
-          <div className="demo-helper-text">
-            <span>Pre-configured Administrator:</span>
-            <code>admin@aura.store</code>
-          </div>
-          <button
-            type="button"
-            onClick={fillAdminCredentials}
-            className="admin-autofill-btn"
-          >
-            Auto-fill Admin
-          </button>
         </div>
 
         {/* Login Form */}
@@ -117,7 +96,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@aura.store"
+                placeholder="admin@yourdomain.com"
                 className="form-input"
                 autoComplete="email"
               />

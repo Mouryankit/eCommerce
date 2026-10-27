@@ -28,23 +28,6 @@ interface AuthContextValue {
   logout: () => void;
 }
 
-const DEFAULT_USERS: Record<string, User> = {
-  'admin@aura.store': {
-    id: 1,
-    name: 'Elena Rostova',
-    email: 'admin@aura.store',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-  },
-  'customer@aura.store': {
-    id: 2,
-    name: 'Julian Vance',
-    email: 'customer@aura.store',
-    role: 'customer',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-  },
-};
-
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -74,9 +57,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteUser && isMounted) {
             setUser(remoteUser);
             localStorage.setItem('aura_user', JSON.stringify(remoteUser));
+          } else if (!remoteUser && isMounted) {
+            // Token is invalid or expired
+            setUser(null);
+            setToken(null);
+            setStoredToken(null);
+            localStorage.removeItem('aura_user');
           }
         } catch {
-          // Keep existing user if offline
+          // Keep existing cached session if offline
         }
       }
     }
@@ -107,10 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ): Promise<{ success: boolean; user?: User; redirectUrl?: string; error?: string }> => {
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Try real backend GraphQL login
     try {
       const result = await loginToBackend(cleanEmail, pass);
-      // Synchronously commit to localStorage so callers can read it immediately
       localStorage.setItem('aura_user', JSON.stringify(result.user));
       setStoredToken(result.token);
       setUser(result.user);
@@ -121,49 +108,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (backendErr: any) {
       console.warn('Backend login request error:', backendErr?.message);
 
-      // If backend error is an explicit invalid credentials message, fail directly
+      const msg = backendErr?.message || '';
       if (
-        backendErr?.message?.includes('Invalid email or password') ||
-        backendErr?.message?.includes('Authentication failed')
+        msg.includes('Invalid email or password') ||
+        msg.includes('Authentication failed')
       ) {
-        return { success: false, error: 'Invalid email or password. Please check your credentials.' };
+        return { success: false, error: 'Invalid email or password. Please verify your credentials.' };
       }
 
-      // 2. Standalone offline fallback
-      let fallbackUser: User;
-      if (DEFAULT_USERS[cleanEmail]) {
-        fallbackUser = DEFAULT_USERS[cleanEmail];
-      } else if (cleanEmail.includes('admin') || cleanEmail.startsWith('admin@')) {
-        fallbackUser = {
-          id: Date.now(),
-          name: cleanEmail.split('@')[0].replace(/[^a-zA-Z]/g, ' ') || 'Admin User',
-          email: cleanEmail,
-          role: 'admin',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        };
-      } else {
-        fallbackUser = {
-          id: Date.now(),
-          name: cleanEmail.split('@')[0].replace(/[^a-zA-Z]/g, ' ') || 'Customer User',
-          email: cleanEmail,
-          role: 'customer',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-        };
-      }
-
-      const mockToken = `mock_token_${Date.now()}`;
-      localStorage.setItem('aura_user', JSON.stringify(fallbackUser));
-      setStoredToken(mockToken);
-      setUser(fallbackUser);
-      setToken(mockToken);
-      setIsLoginModalOpen(false);
-      showToast(`Signed in as ${fallbackUser.name} (Offline Mode)`, 'info');
-      const adminUrl = (import.meta.env.VITE_ADMIN_URL as string) || 'http://localhost:4001';
-      const customerUrl = (import.meta.env.VITE_CUSTOMER_URL as string) || 'http://localhost:4000';
       return {
-        success: true,
-        user: fallbackUser,
-        redirectUrl: fallbackUser.role === 'admin' ? adminUrl : customerUrl,
+        success: false,
+        error: 'Unable to reach the authentication server. Please check your internet connection.',
       };
     }
   };
@@ -187,27 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (backendErr: any) {
       console.warn('Backend registration error:', backendErr?.message);
 
-      if (backendErr?.message?.includes('already exists')) {
-        return { success: false, error: 'An account with this email already exists. Please log in.' };
+      const msg = backendErr?.message || '';
+      if (msg.includes('already exists')) {
+        return { success: false, error: 'An account with this email address already exists. Please log in.' };
       }
 
-      // Fallback local registration
-      const newLocalUser: User = {
-        id: Date.now(),
-        name: name.trim(),
-        email: cleanEmail,
-        role: cleanEmail.includes('admin') ? 'admin' : 'customer',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      return {
+        success: false,
+        error: 'Unable to reach the server to create your account. Please check your connection and try again.',
       };
-      const mockToken = `mock_token_${Date.now()}`;
-      localStorage.setItem('aura_user', JSON.stringify(newLocalUser));
-      setStoredToken(mockToken);
-      setUser(newLocalUser);
-      setToken(mockToken);
-      setIsLoginModalOpen(false);
-      showToast(`Account created for ${newLocalUser.name}!`, 'success');
-      const customerUrl = (import.meta.env.VITE_CUSTOMER_URL as string) || 'http://localhost:4000';
-      return { success: true, user: newLocalUser, redirectUrl: customerUrl };
     }
   };
 
