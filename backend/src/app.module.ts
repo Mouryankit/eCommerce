@@ -33,15 +33,33 @@ const srcDir = existsSync(join(process.cwd(), 'backend', 'src'))
       context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
     }),
 
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD ,
-      database: process.env.DB_NAME || 'ecommerce',
-      autoLoadEntities: true,
-      synchronize: true,
+    TypeOrmModule.forRootAsync({
+      useFactory: () => {
+        const dbUrl = process.env.DATABASE_URL?.trim();
+        const host = process.env.DB_HOST?.trim() || 'localhost';
+        const isLocal =
+          !dbUrl && (host === 'localhost' || host === '127.0.0.1');
+
+        const useSsl =
+          process.env.DB_SSL === 'true' ||
+          (!isLocal && process.env.DB_SSL !== 'false' && Boolean(process.env.DB_HOST) && !host.endsWith('.internal'));
+
+        return {
+          type: 'postgres',
+          ...(dbUrl
+            ? { url: dbUrl }
+            : {
+                host,
+                port: Number(process.env.DB_PORT) || 5432,
+                username: process.env.DB_USERNAME || 'postgres',
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_NAME || 'ecommerce',
+              }),
+          autoLoadEntities: true,
+          synchronize: true,
+          ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+        };
+      },
     }),
 
     AuthModule,
